@@ -12,8 +12,8 @@ using Techa.DocumentGenerator.Infrastructure.Data;
 namespace Techa.DocumentGenerator.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241223191839_Mig_20242312_01")]
-    partial class Mig_20242312_01
+    [Migration("20241224121858_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

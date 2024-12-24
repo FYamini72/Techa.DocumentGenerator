@@ -4,6 +4,8 @@ using System.Text;
 using Techa.DocumentGenerator.CodeGeneratore.Utilities;
 using Techa.DocumentGenerator.Domain.Entities;
 using Techa.DocumentGenerator.Domain.Entities.AAA;
+using Techa.DocumentGenerator.Domain.Entities.BaseInfo;
+using Techa.DocumentGenerator.Domain.Entities.DbInfo;
 
 namespace Techa.DocumentGenerator.CodeGeneratore
 {
@@ -27,7 +29,11 @@ namespace Techa.DocumentGenerator.CodeGeneratore
                 nameof(UserRole).ToLower(),
 
                 nameof(AttachmentFile).ToLower(),
-                nameof(EventLog).ToLower()
+                nameof(EventLog).ToLower(),
+
+                //nameof(Project).ToLower(),
+                nameof(StoredProcedure).ToLower(),
+                nameof(StoredProcedureParameter).ToLower(),
             };
 
             do
