@@ -32,7 +32,7 @@ namespace Techa.DocumentGenerator.CodeGeneratore
                 nameof(EventLog).ToLower(),
 
                 nameof(Project).ToLower(),
-                //nameof(StoredProcedure).ToLower(),
+                nameof(StoredProcedure).ToLower(),
                 nameof(StoredProcedureParameter).ToLower(),
             };
 
