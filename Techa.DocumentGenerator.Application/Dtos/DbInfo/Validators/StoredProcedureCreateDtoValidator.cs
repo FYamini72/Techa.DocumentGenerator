@@ -24,9 +24,9 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo.Validators
             
             RuleFor(x => x.ProjectId)
                 .NotEmpty()
-                .WithMessage("وارد کردن پروژه الزامی است")
+                .WithMessage("انتخاب کردن پروژه الزامی است")
                 .NotNull()
-                .WithMessage("وارد کردن پروژه الزامی است")
+                .WithMessage("انتخاب کردن پروژه الزامی است")
                 .MustAsync(async (projectId, cancellationToken) =>
                 {
                     return await _projectService.GetAll(x=>x.Id == projectId).AnyAsync();
