@@ -141,6 +141,8 @@ namespace Techa.DocumentGenerator.API.Utilities
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IAttachmentFileService, AttachmentFileService>();
             services.AddScoped<IHttpContextHelper, HttpContextHelper>();
+            services.AddScoped<IAdoRepository, AdoRepository>();
+            services.AddScoped<IAdoService, AdoService>();
 
             services.AddValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
 
