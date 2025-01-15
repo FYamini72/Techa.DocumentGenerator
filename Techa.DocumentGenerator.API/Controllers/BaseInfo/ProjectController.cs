@@ -19,11 +19,13 @@ namespace Techa.DocumentGenerator.API.Controllers.BaseInfo
         private readonly IValidator<ProjectCreateDto> _createValidator;
         private readonly IValidator<ProjectSearchDto> _searchValidator;
 
-        public ProjectController(IMediator mediator, IValidator<ProjectCreateDto> createValidator, IValidator<ProjectSearchDto> searchValidator)
+        public ProjectController(IMediator mediator,
+            IValidator<ProjectCreateDto> createValidator,
+            IValidator<ProjectSearchDto> searchValidator)
         {
-            this._mediator = mediator;
-            this._createValidator = createValidator;
-            this._searchValidator = searchValidator;
+            _mediator = mediator;
+            _createValidator = createValidator;
+            _searchValidator = searchValidator;
         }
 
         [HttpGet]
@@ -115,6 +117,18 @@ namespace Techa.DocumentGenerator.API.Controllers.BaseInfo
         {
             var command = new DeleteProjectCommand(id);
             var handlerResponse = await _mediator.Send(command);
+
+            if (handlerResponse.Status)
+                return Ok();
+
+            return BadRequest(handlerResponse.Message);
+        }
+
+        [HttpGet("[action]")]
+        public async Task<ApiResult> GenerateStoredProcedures(int id, CancellationToken cancellationToken)
+        {
+            var query = new GenerateStoredProceduresQuery(id);
+            var handlerResponse = await _mediator.Send(query);
 
             if (handlerResponse.Status)
                 return Ok();
