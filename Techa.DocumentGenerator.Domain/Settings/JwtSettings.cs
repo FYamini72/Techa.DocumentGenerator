@@ -9,4 +9,8 @@
         public int NotBeforeMinutes { get; set; }
         public int ExpirationMinutes { get; set; }
     }
+    public class AvalAiSetting
+    {
+        public string ApiKey { get; set; }
+    }
 }

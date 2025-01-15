@@ -22,6 +22,9 @@ using Techa.DocumentGenerator.Application.CQRS.AAA.UserFiles.Commands;
 using Techa.DocumentGenerator.Application.Dtos.AAA.Validators;
 using Techa.DocumentGenerator.Application.Services.Interfaces.AAA;
 using Techa.DocumentGenerator.Application.Services.Implementations.AAA;
+using Betalgo.Ranul.OpenAI.Extensions;
+using Techa.DocumentGenerator.Application.Services.Implementations.Ai;
+using Techa.DocumentGenerator.Application.Services.Interfaces.Ai;
 
 namespace Techa.DocumentGenerator.API.Utilities
 {
@@ -44,6 +47,14 @@ namespace Techa.DocumentGenerator.API.Utilities
             var _jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
             services.AddSingleton(_jwtSettings);
 
+            var _avalAiSettings = configuration.GetSection("AvalAiSetting").Get<AvalAiSetting>();
+            services.AddSingleton(_avalAiSettings);
+
+            services.AddOpenAIService(settings =>
+            {
+                settings.ApiKey = _avalAiSettings?.ApiKey ?? "";
+                settings.BaseDomain = "https://api.avalapis.ir/v1";
+            });
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -143,6 +154,7 @@ namespace Techa.DocumentGenerator.API.Utilities
             services.AddScoped<IHttpContextHelper, HttpContextHelper>();
             services.AddScoped<IAdoRepository, AdoRepository>();
             services.AddScoped<IAdoService, AdoService>();
+            services.AddScoped<IAvalAiService, AvalAiService>();
 
             services.AddValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
 

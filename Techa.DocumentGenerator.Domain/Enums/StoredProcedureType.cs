@@ -4,9 +4,7 @@
     {
         NotSet,
         Read,
-        Create,
-        Update,
-        Delete,
-        Other
+        CreateOrUpdate,
+        Delete
     }
 }

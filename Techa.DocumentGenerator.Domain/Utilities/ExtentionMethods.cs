@@ -47,5 +47,21 @@
 
             return isValid;
         }
+        public static string RemoveSpecialCharacters(this string input)
+        {
+            // حذف کاراکترهای اضافی `json` از ابتدا و انتها
+            if (input.StartsWith("```json"))
+            {
+                input = input.Substring(7); // حذف 7 کاراکتر ابتدای رشته (```json\n)
+            }
+
+            if (input.EndsWith("```"))
+            {
+                input = input.Substring(0, input.Length - 3); // حذف 3 کاراکتر انتهایی (```)
+            }
+
+            // حذف فاصله‌های اضافی
+            return input.Trim();
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System.Text;
 using Techa.DocumentGenerator.Application.Dtos.DbInfo;
 using Techa.DocumentGenerator.Application.Repositories;
@@ -115,6 +116,27 @@ namespace Techa.DocumentGenerator.Application.Services.Implementations
                 return await this.GetDataAsync(model.ProjectId, executableProcedureScript, autoCloseConnection, false, cancellationToken);
 
             return await this.SetDataAsync(model.ProjectId, executableProcedureScript, autoCloseConnection, false, cancellationToken);
+        }
+
+        public async Task<SQLQueryDisplayDto> GetAllProceduresInfoAsync(int projectId, CancellationToken cancellationToken)
+        {
+            string sqlQuery = @"SELECT p.name AS ProcedureName, NULL AS ProcedureCode FROM sys.procedures AS p";
+
+            return await _adoRepository.GetDataAsync(projectId, sqlQuery, true, cancellationToken);            
+        }
+        public async Task<SQLQueryDisplayDto> GetProcedureInfoAsync(int projectId, string procedureName, CancellationToken cancellationToken)
+        {
+            string sqlQuery = @"  
+                SELECT   
+                    p.name AS ProcedureName,  
+                    m.definition AS ProcedureCode  
+                FROM   
+                    sys.procedures AS p  
+                INNER JOIN   
+                    sys.sql_modules AS m ON p.object_id = m.object_id
+                WHERE p.name = N'{0}'";
+
+            return await _adoRepository.GetDataAsync(projectId, (string.Format(sqlQuery, procedureName)), true, cancellationToken);            
         }
     }
 }

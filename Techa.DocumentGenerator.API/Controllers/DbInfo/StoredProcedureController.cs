@@ -121,5 +121,17 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
 
             return BadRequest(handlerResponse.Message);
         }
+
+        [HttpGet("[action]")]
+        public async Task<ApiResult> GenerateStoredProcedureParametersUsingAi(int id, CancellationToken cancellationToken)
+        {
+            var query = new GenerateStoredProcedureParametersUsingAiQuery(id);
+            var handlerResponse = await _mediator.Send(query);
+
+            if (handlerResponse.Status)
+                return Ok();
+
+            return BadRequest(handlerResponse.Message);
+        }
     }
 }
