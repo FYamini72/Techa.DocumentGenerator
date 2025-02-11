@@ -4,10 +4,12 @@ using Techa.DocumentGenerator.Domain.Entities.DbInfo;
 using Techa.DocumentGenerator.Application.Services.Interfaces;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Techa.DocumentGenerator.Application.Dtos;
 
 namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureParameterFiles.Handlers
 {
-    public class GetAllStoredProcedureParametersQueryHandler : IRequestHandler<GetAllStoredProcedureParametersQuery, HandlerResponse<List<StoredProcedureParameterDisplayDto>>>
+    public class GetAllStoredProcedureParametersQueryHandler : IRequestHandler<GetAllStoredProcedureParametersQuery, HandlerResponse<BaseGridDto<StoredProcedureParameterDisplayDto>>>
     {
         private readonly IBaseService<StoredProcedureParameter> _service;
 
@@ -16,11 +18,12 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureParamet
             _service = service;
         }
 
-        public async Task<HandlerResponse<List<StoredProcedureParameterDisplayDto>>> Handle(GetAllStoredProcedureParametersQuery request, CancellationToken cancellationToken)
+        public async Task<HandlerResponse<BaseGridDto<StoredProcedureParameterDisplayDto>>> Handle(GetAllStoredProcedureParametersQuery request, CancellationToken cancellationToken)
         {
             var items = _service.GetAll();
+            var totalCount = await items.CountAsync();
 
-            if(request.SearchDto != null)
+            if (request.SearchDto != null)
             {
                 if (!request.SearchDto.GetAllItems)
                 {
@@ -66,11 +69,17 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureParamet
                     if (!request.SearchDto.Skip.HasValue || request.SearchDto.Skip < 0)
                         request.SearchDto.Skip = 0;
 
-                    items.Take(request.SearchDto.Take.Value).Skip(request.SearchDto.Skip.Value);
+                    totalCount = await items.CountAsync();
+                    items = items.Skip(request.SearchDto.Skip.Value).Take(request.SearchDto.Take.Value);
                 }
             }
 
-            return items.Adapt<List<StoredProcedureParameterDisplayDto>>();
+            var response = new BaseGridDto<StoredProcedureParameterDisplayDto>()
+            {
+                Data = items.Adapt<List<StoredProcedureParameterDisplayDto>>(),
+                TotalCount = totalCount
+            };
+            return response;
         }
     }
 }

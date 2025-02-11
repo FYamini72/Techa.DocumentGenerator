@@ -18,4 +18,24 @@ namespace Techa.DocumentGenerator.Domain.Entities.DbInfo
 
         public ICollection<StoredProcedureParameter> StoredProcedureParameters { get; set; }
     }
+
+    public class StoredProcedureRole : BaseEntity
+    {
+        public int StoredProcedureId { get; set; }
+        [ForeignKey(nameof(StoredProcedureId))]
+        public StoredProcedure StoredProcedure { get; set; }
+
+        public int ProjectRoleId { get; set; }
+        [ForeignKey(nameof(ProjectRoleId))]
+        public ProjectRole ProjectRole { get; set; }
+    }
+
+    public class ProjectRole : BaseEntity
+    {
+        public int ProjectId { get; set; }
+        [ForeignKey(nameof(ProjectId))]
+        public Project Project { get; set; }
+
+        public int Title { get; set; }
+    }
 }

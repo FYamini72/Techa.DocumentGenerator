@@ -6,6 +6,7 @@ using Techa.DocumentGenerator.API.Utilities.Api;
 using Techa.DocumentGenerator.API.Utilities.Filters;
 using Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureParameterFiles.Commands;
 using Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureParameterFiles.Queries;
+using Techa.DocumentGenerator.Application.Dtos;
 using Techa.DocumentGenerator.Application.Dtos.DbInfo;
 
 namespace Techa.DocumentGenerator.API.Controllers.DbInfo
@@ -51,7 +52,7 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
         }
 
         [HttpPost("GetByFilter")]
-        public async Task<ApiResult<List<StoredProcedureParameterDisplayDto>>> Post(StoredProcedureParameterSearchDto model)
+        public async Task<ApiResult<BaseGridDto<StoredProcedureParameterDisplayDto>>> Post(StoredProcedureParameterSearchDto model)
         {
             var result = await _searchValidator.ValidateAsync(model);
 
