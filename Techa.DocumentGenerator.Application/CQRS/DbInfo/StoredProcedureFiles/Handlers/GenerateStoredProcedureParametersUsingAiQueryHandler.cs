@@ -59,15 +59,21 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.H
                 var oldStoredProcedureParameters = new List<StoredProcedureParameter>();
                 foreach (var parameter in parameters)
                 {
+                    if (parameter == null || string.IsNullOrEmpty(parameter.ParameterName))
+                        continue;
+                    if (parameter.ParameterName.ToLower() == "res")
+                        continue;
+
                     var oldParameter = oldParameters.FirstOrDefault(x => x.ParameterName.ToLower() == "@" + parameter?.ParameterName?.ToLower());
                     if (oldParameter == null)
                     {
+                        var parameterName = parameter.ParameterName.StartsWith("@") ? parameter.ParameterName : $"@{parameter.ParameterName}";
                         newStoredProcedureParameters.Add(new StoredProcedureParameter()
                         {
                             StoredProcedureId = request.Id,
                             DefaultValue = parameter.DefaultValue,
                             NullableOption = parameter.IsRequired ? Domain.Enums.NullableOption.Required : Domain.Enums.NullableOption.Nullable,
-                            ParameterName = parameter.ParameterName ?? "",
+                            ParameterName = parameterName,
                             ParameterType = parameter.ParameterDataType
                         });
                     }

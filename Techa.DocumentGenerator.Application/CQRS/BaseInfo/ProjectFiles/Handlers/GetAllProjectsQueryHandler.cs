@@ -4,10 +4,12 @@ using Techa.DocumentGenerator.Domain.Entities.BaseInfo;
 using Techa.DocumentGenerator.Application.Services.Interfaces;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Techa.DocumentGenerator.Application.Dtos;
 
 namespace Techa.DocumentGenerator.Application.CQRS.BaseInfo.ProjectFiles.Handlers
 {
-    public class GetAllProjectsQueryHandler : IRequestHandler<GetAllProjectsQuery, HandlerResponse<List<ProjectDisplayDto>>>
+    public class GetAllProjectsQueryHandler : IRequestHandler<GetAllProjectsQuery, HandlerResponse<BaseGridDto<ProjectDisplayDto>>>
     {
         private readonly IBaseService<Project> _service;
 
@@ -16,9 +18,10 @@ namespace Techa.DocumentGenerator.Application.CQRS.BaseInfo.ProjectFiles.Handler
             _service = service;
         }
 
-        public async Task<HandlerResponse<List<ProjectDisplayDto>>> Handle(GetAllProjectsQuery request, CancellationToken cancellationToken)
+        public async Task<HandlerResponse<BaseGridDto<ProjectDisplayDto>>> Handle(GetAllProjectsQuery request, CancellationToken cancellationToken)
         {
             var items = _service.GetAll();
+            var totalCount = await items.CountAsync();
 
             if(request.SearchDto != null)
             {
@@ -51,11 +54,17 @@ namespace Techa.DocumentGenerator.Application.CQRS.BaseInfo.ProjectFiles.Handler
                     if (!request.SearchDto.Skip.HasValue || request.SearchDto.Skip < 0)
                         request.SearchDto.Skip = 0;
 
-                    items.Take(request.SearchDto.Take.Value).Skip(request.SearchDto.Skip.Value);
+                    totalCount = await items.CountAsync();
+                    items = items.Skip(request.SearchDto.Skip.Value).Take(request.SearchDto.Take.Value);
                 }
             }
 
-            return items.Adapt<List<ProjectDisplayDto>>();
+            var response = new BaseGridDto<ProjectDisplayDto>()
+            {
+                Data = items.Adapt<List<ProjectDisplayDto>>(),
+                TotalCount = totalCount
+            };
+            return response;
         }
     }
 }

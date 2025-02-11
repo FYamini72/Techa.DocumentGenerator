@@ -1,30 +1,32 @@
-﻿using Techa.DocumentGenerator.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Net;
+using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
+using Betalgo.Ranul.OpenAI.Extensions;
+using Techa.DocumentGenerator.Infrastructure.Data;
 using Techa.DocumentGenerator.Domain.Settings;
 using Techa.DocumentGenerator.Application.Repositories;
 using Techa.DocumentGenerator.Application.Services.Implementations;
 using Techa.DocumentGenerator.Application.Services.Interfaces;
 using Techa.DocumentGenerator.Infrastructure.IdentityServices;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using Techa.DocumentGenerator.API.Utilities.Exceptions;
 using Techa.DocumentGenerator.API.Utilities.Api;
-using System.Security.Claims;
-using System.Net;
 using Techa.DocumentGenerator.API.Mapping;
-using FluentValidation;
 using Techa.DocumentGenerator.Infrastructure.Repositories;
-using Microsoft.AspNetCore.Authorization;
 using Techa.DocumentGenerator.Domain.Entities.AAA;
 using Techa.DocumentGenerator.Application.CQRS.AAA.UserFiles.Commands;
 using Techa.DocumentGenerator.Application.Dtos.AAA.Validators;
 using Techa.DocumentGenerator.Application.Services.Interfaces.AAA;
 using Techa.DocumentGenerator.Application.Services.Implementations.AAA;
-using Betalgo.Ranul.OpenAI.Extensions;
 using Techa.DocumentGenerator.Application.Services.Implementations.Ai;
 using Techa.DocumentGenerator.Application.Services.Interfaces.Ai;
+using Newtonsoft.Json;
+using Techa.DocumentGenerator.Application.Dtos.AAA;
 
 namespace Techa.DocumentGenerator.API.Utilities
 {
@@ -99,37 +101,68 @@ namespace Techa.DocumentGenerator.API.Utilities
                     },
                     OnTokenValidated = async context =>
                     {
-                        var userRepository = context.HttpContext.RequestServices.GetRequiredService<IBaseRepository<User>>();
-                        var userRoleRepository = context.HttpContext.RequestServices.GetRequiredService<IBaseRepository<UserRole>>();
-
                         var claimsIdentity = context.Principal.Identity as ClaimsIdentity;
                         if (claimsIdentity.Claims?.Any() != true)
                             context.Fail("This token has no claims.");
 
-                        var securityStamp = claimsIdentity.FindFirstValue(new ClaimsIdentityOptions().SecurityStampClaimType);
-                        if (!securityStamp.HasValue())
-                            context.Fail("This token has no secuirty stamp");
-
-                        var userId = claimsIdentity.GetUserId<int>();
-                        var user = await userRepository.GetByIdAsync(context.HttpContext.RequestAborted, userId);
-
-                        if (user.SecurityStamp != Guid.Parse(securityStamp))
-                            context.Fail("Token secuirty stamp is not valid.");
-
-                        var endPoint = context.HttpContext.GetEndpoint();
-                        if (endPoint != null)
+                        var strProjectId = claimsIdentity.FindFirstValue("ProjectId");
+                        if (!string.IsNullOrEmpty(strProjectId))
                         {
-                            var authAttr = endPoint.Metadata.OfType<AuthorizeAttribute>();
-                            if (authAttr != null)
+                            if(int.TryParse(strProjectId, out int projectId))
                             {
-                                var authorizedRoles = authAttr.Select(x => x.Roles);
-                                if (authorizedRoles != null && authorizedRoles.Where(x => !string.IsNullOrEmpty(x)).Any())
+                                var adoService = context.HttpContext.RequestServices.GetRequiredService<IAdoService>();
+
+                                var securityStamp = claimsIdentity.FindFirstValue(new ClaimsIdentityOptions().SecurityStampClaimType);
+                                if (!securityStamp.HasValue())
+                                    context.Fail("This token has no secuirty stamp");
+
+                                var userId = claimsIdentity.GetUserId<int>();
+                                var userAdoResponse = await adoService.GetDataAsync(projectId, $"SELECT [SecurityStamp] FROM USERS WHERE Id = {userId}", true, true, context.HttpContext.RequestAborted);
+
+                                var data = JsonConvert.DeserializeObject<List<UserSecurityStamp>>(userAdoResponse.Dataset);
+                                var dbSecurityStamp = data?.FirstOrDefault()?.SecurityStamp ?? "";
+
+                                if (string.IsNullOrEmpty(dbSecurityStamp))
+                                    context.Fail("Token is not valid.");
+
+                                if (Guid.Parse(dbSecurityStamp) != Guid.Parse(securityStamp))
+                                    context.Fail("Token secuirty stamp is not valid.");
+                            }
+                            else
+                            {
+                                context.Fail("ProjectId not found.");
+                            }
+                        }
+                        else
+                        {
+                            var userRepository = context.HttpContext.RequestServices.GetRequiredService<IBaseRepository<User>>();
+                            var userRoleRepository = context.HttpContext.RequestServices.GetRequiredService<IBaseRepository<UserRole>>();
+
+                            var securityStamp = claimsIdentity.FindFirstValue(new ClaimsIdentityOptions().SecurityStampClaimType);
+                            if (!securityStamp.HasValue())
+                                context.Fail("This token has no secuirty stamp");
+
+                            var userId = claimsIdentity.GetUserId<int>();
+                            var user = await userRepository.GetByIdAsync(context.HttpContext.RequestAborted, userId);
+
+                            if (user.SecurityStamp != Guid.Parse(securityStamp))
+                                context.Fail("Token secuirty stamp is not valid.");
+
+                            var endPoint = context.HttpContext.GetEndpoint();
+                            if (endPoint != null)
+                            {
+                                var authAttr = endPoint.Metadata.OfType<AuthorizeAttribute>();
+                                if (authAttr != null)
                                 {
-                                    var roleClaims = claimsIdentity.GetUserRoles();
-                                    if (roleClaims != null)
+                                    var authorizedRoles = authAttr.Select(x => x.Roles);
+                                    if (authorizedRoles != null && authorizedRoles.Where(x => !string.IsNullOrEmpty(x)).Any())
                                     {
-                                        if (!authorizedRoles.Any(x => roleClaims.Contains(x)))
-                                            context.Fail("You are unauthorized to access this resource.");
+                                        var roleClaims = claimsIdentity.GetUserRoles();
+                                        if (roleClaims != null)
+                                        {
+                                            if (!authorizedRoles.Any(x => roleClaims.Contains(x)))
+                                                context.Fail("You are unauthorized to access this resource.");
+                                        }
                                     }
                                 }
                             }
@@ -167,5 +200,10 @@ namespace Techa.DocumentGenerator.API.Utilities
 
             services.AddSwaggerGen();
         }
+    }
+
+    public class UserSecurityStamp
+    {
+        public string SecurityStamp { get; set; }
     }
 }

@@ -4,10 +4,12 @@ using Techa.DocumentGenerator.Domain.Entities.DbInfo;
 using Techa.DocumentGenerator.Application.Services.Interfaces;
 using Mapster;
 using MediatR;
+using Techa.DocumentGenerator.Application.Dtos;
+using Microsoft.EntityFrameworkCore;
 
 namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.Handlers
 {
-    public class GetAllStoredProceduresQueryHandler : IRequestHandler<GetAllStoredProceduresQuery, HandlerResponse<List<StoredProcedureDisplayDto>>>
+    public class GetAllStoredProceduresQueryHandler : IRequestHandler<GetAllStoredProceduresQuery, HandlerResponse<BaseGridDto<StoredProcedureDisplayDto>>>
     {
         private readonly IBaseService<StoredProcedure> _service;
 
@@ -16,11 +18,12 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.H
             _service = service;
         }
 
-        public async Task<HandlerResponse<List<StoredProcedureDisplayDto>>> Handle(GetAllStoredProceduresQuery request, CancellationToken cancellationToken)
+        public async Task<HandlerResponse<BaseGridDto<StoredProcedureDisplayDto>>> Handle(GetAllStoredProceduresQuery request, CancellationToken cancellationToken)
         {
             var items = _service.GetAll();
+            var totalCount = await items.CountAsync();
 
-            if(request.SearchDto != null)
+            if (request.SearchDto != null)
             {
                 if (!request.SearchDto.GetAllItems)
                 {
@@ -48,11 +51,17 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.H
                     if (!request.SearchDto.Skip.HasValue || request.SearchDto.Skip < 0)
                         request.SearchDto.Skip = 0;
 
-                    items.Take(request.SearchDto.Take.Value).Skip(request.SearchDto.Skip.Value);
+                    totalCount = await items.CountAsync();
+                    items = items.Skip(request.SearchDto.Skip.Value).Take(request.SearchDto.Take.Value);
                 }
             }
 
-            return items.Adapt<List<StoredProcedureDisplayDto>>();
+            var response = new BaseGridDto<StoredProcedureDisplayDto>()
+            {
+                Data = items.Adapt<List<StoredProcedureDisplayDto>>(),
+                TotalCount = totalCount
+            };
+            return response;
         }
     }
 }

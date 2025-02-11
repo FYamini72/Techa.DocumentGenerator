@@ -6,6 +6,7 @@ using Techa.DocumentGenerator.API.Utilities.Api;
 using Techa.DocumentGenerator.API.Utilities.Filters;
 using Techa.DocumentGenerator.Application.CQRS.BaseInfo.ProjectFiles.Commands;
 using Techa.DocumentGenerator.Application.CQRS.BaseInfo.ProjectFiles.Queries;
+using Techa.DocumentGenerator.Application.Dtos;
 using Techa.DocumentGenerator.Application.Dtos.BaseInfo;
 
 namespace Techa.DocumentGenerator.API.Controllers.BaseInfo
@@ -29,7 +30,7 @@ namespace Techa.DocumentGenerator.API.Controllers.BaseInfo
         }
 
         [HttpGet]
-        public async Task<ApiResult<List<ProjectDisplayDto>>> Get()
+        public async Task<ApiResult<BaseGridDto<ProjectDisplayDto>>> Get()
         {
             var query = new GetAllProjectsQuery(null);
             var handlerResponse = await _mediator.Send(query);
@@ -53,7 +54,7 @@ namespace Techa.DocumentGenerator.API.Controllers.BaseInfo
         }
 
         [HttpPost("GetByFilter")]
-        public async Task<ApiResult<List<ProjectDisplayDto>>> Post(ProjectSearchDto model)
+        public async Task<ApiResult<BaseGridDto<ProjectDisplayDto>>> Post(ProjectSearchDto model)
         {
             var result = await _searchValidator.ValidateAsync(model);
 

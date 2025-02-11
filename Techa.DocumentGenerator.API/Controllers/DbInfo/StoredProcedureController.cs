@@ -6,6 +6,7 @@ using Techa.DocumentGenerator.API.Utilities.Api;
 using Techa.DocumentGenerator.API.Utilities.Filters;
 using Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.Commands;
 using Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.Queries;
+using Techa.DocumentGenerator.Application.Dtos;
 using Techa.DocumentGenerator.Application.Dtos.DbInfo;
 
 namespace Techa.DocumentGenerator.API.Controllers.DbInfo
@@ -27,7 +28,7 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
         }
 
         [HttpGet]
-        public async Task<ApiResult<List<StoredProcedureDisplayDto>>> Get()
+        public async Task<ApiResult<BaseGridDto<StoredProcedureDisplayDto>>> Get()
         {
             var query = new GetAllStoredProceduresQuery(null);
             var handlerResponse = await _mediator.Send(query);
@@ -51,7 +52,7 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
         }
 
         [HttpPost("GetByFilter")]
-        public async Task<ApiResult<List<StoredProcedureDisplayDto>>> Post(StoredProcedureSearchDto model)
+        public async Task<ApiResult<BaseGridDto<StoredProcedureDisplayDto>>> Post(StoredProcedureSearchDto model)
         {
             var result = await _searchValidator.ValidateAsync(model);
 
@@ -126,7 +127,7 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
         public async Task<ApiResult> GenerateStoredProcedureParametersUsingAi(int id, CancellationToken cancellationToken)
         {
             var query = new GenerateStoredProcedureParametersUsingAiQuery(id);
-            var handlerResponse = await _mediator.Send(query);
+            var handlerResponse = await _mediator.Send(query, cancellationToken);
 
             if (handlerResponse.Status)
                 return Ok();
