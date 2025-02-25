@@ -12,5 +12,6 @@
         public string? ParameterDataType { get; set; }
         public bool IsRequired { get; set; }
         public string? DefaultValue { get; set; }
+        public bool IsOutParameter { get; set; }
     }
 }

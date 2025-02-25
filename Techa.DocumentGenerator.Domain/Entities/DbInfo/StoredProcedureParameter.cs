@@ -21,5 +21,7 @@ namespace Techa.DocumentGenerator.Domain.Entities.DbInfo
         public string? MaxValue { get; set; }
         public int? MinLength { get; set; }
         public int? MaxLength { get; set; }
+
+        public bool IsOutParameter { get; set; }
     }
 }

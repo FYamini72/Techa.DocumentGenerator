@@ -19,12 +19,17 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
         private readonly IMediator _mediator;
         private readonly IValidator<StoredProcedureCreateDto> _createValidator;
         private readonly IValidator<StoredProcedureSearchDto> _searchValidator;
+        private readonly IValidator<StoredProcedureScriptDto> _scriptValidator;
 
-        public StoredProcedureController(IMediator mediator, IValidator<StoredProcedureCreateDto> createValidator, IValidator<StoredProcedureSearchDto> searchValidator)
+        public StoredProcedureController(IMediator mediator, 
+            IValidator<StoredProcedureCreateDto> createValidator, 
+            IValidator<StoredProcedureSearchDto> searchValidator, 
+            IValidator<StoredProcedureScriptDto> scriptValidator)
         {
             this._mediator = mediator;
             this._createValidator = createValidator;
             this._searchValidator = searchValidator;
+            this._scriptValidator = scriptValidator;
         }
 
         [HttpGet]
@@ -131,6 +136,46 @@ namespace Techa.DocumentGenerator.API.Controllers.DbInfo
 
             if (handlerResponse.Status)
                 return Ok();
+
+            return BadRequest(handlerResponse.Message);
+        }
+
+        [HttpGet("[action]")]
+        public async Task<ApiResult<StoredProcedureScriptDto>> GetStoredProcedureScript(int id, CancellationToken cancellationToken)
+        {
+            var query = new GetStoredProcedureScriptQuery(id);
+            var handlerResponse = await _mediator.Send(query, cancellationToken);
+
+            if (handlerResponse.Status)
+                return Ok(handlerResponse.Data);
+
+            return BadRequest(handlerResponse.Message);
+        }
+
+        [HttpPut("[action]")]
+        public async Task<ApiResult> EditStoredProcedureScript(StoredProcedureScriptDto model, CancellationToken cancellationToken)
+        {
+            var result = await _scriptValidator.ValidateAsync(model);
+
+            if (!result.IsValid)
+            {
+                result.AddToModelState(ModelState);
+                return BadRequest(ModelState);
+            }
+
+            var command = new EditStoredProcedureScriptCommand(model);
+            var handlerResponse = await _mediator.Send(command);
+
+            if (handlerResponse.Status)
+            {
+                var query = new GenerateStoredProcedureParametersUsingAiQuery(model.Id);
+                var updateParametersHandlerResponse = await _mediator.Send(query, cancellationToken);
+
+                if (!updateParametersHandlerResponse.Status)
+                    return BadRequest(updateParametersHandlerResponse.Message);
+
+                return Ok();
+            }
 
             return BadRequest(handlerResponse.Message);
         }
