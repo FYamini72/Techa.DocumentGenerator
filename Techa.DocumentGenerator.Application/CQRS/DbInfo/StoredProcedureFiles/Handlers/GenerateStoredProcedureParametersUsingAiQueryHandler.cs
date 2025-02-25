@@ -46,7 +46,7 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.H
             var messages = new List<ChatMessage>()
             {
                 ChatMessage.FromUser(procedure.ProcedureCode),
-                ChatMessage.FromUser("Analyze the stored procedure and generate a list of its parameters in the following JSON format. Only provide the JSON output without any additional text.  \r\n\r\n{  \r\n    \"ParameterName\": \"\",  \r\n    \"ParameterDataType\": \"\",  \r\n    \"IsRequired\": true,\r\n    \"DefaultValue\": \"\"\r\n}")
+                ChatMessage.FromUser("Analyze the stored procedure and generate a list of its parameters in the following JSON format. Only provide the JSON output without any additional text.\r\n{\r\n\"ParameterName\": \"\",\r\n\"ParameterDataType\": \"\",\r\n\"IsRequired\": true,\r\n\"DefaultValue\": \"\",\r\n\"IsOutParameter\": false\r\n}")
             };
             var strParameters = await _avalAiService.CreateCompletionAsync(messages, Models.Gpt_4o_mini);
             var parameters = JsonConvert.DeserializeObject<List<StoredProcedureParameterInfoDto>>(strParameters.RemoveSpecialCharacters());
@@ -61,20 +61,22 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.H
                 {
                     if (parameter == null || string.IsNullOrEmpty(parameter.ParameterName))
                         continue;
-                    if (parameter.ParameterName.ToLower() == "res")
-                        continue;
+                    //if (parameter.ParameterName.ToLower() == "res" || parameter.ParameterName.ToLower() == "@res" )
+                    //    continue;
 
-                    var oldParameter = oldParameters.FirstOrDefault(x => x.ParameterName.ToLower() == "@" + parameter?.ParameterName?.ToLower());
+                    parameter.ParameterName = parameter.ParameterName.StartsWith("@") ? parameter.ParameterName : $"@{parameter.ParameterName}";
+
+                    var oldParameter = oldParameters.FirstOrDefault(x => x.ParameterName.ToLower() == parameter.ParameterName.ToLower());
                     if (oldParameter == null)
                     {
-                        var parameterName = parameter.ParameterName.StartsWith("@") ? parameter.ParameterName : $"@{parameter.ParameterName}";
                         newStoredProcedureParameters.Add(new StoredProcedureParameter()
                         {
                             StoredProcedureId = request.Id,
                             DefaultValue = parameter.DefaultValue,
                             NullableOption = parameter.IsRequired ? Domain.Enums.NullableOption.Required : Domain.Enums.NullableOption.Nullable,
-                            ParameterName = parameterName,
-                            ParameterType = parameter.ParameterDataType
+                            ParameterName = parameter.ParameterName,
+                            ParameterType = parameter.ParameterDataType,
+                            IsOutParameter = parameter.IsOutParameter
                         });
                     }
                     else
@@ -84,12 +86,17 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureFiles.H
                         oldParameter.NullableOption = parameter.IsRequired
                             ? Domain.Enums.NullableOption.Required
                             : Domain.Enums.NullableOption.Nullable;
+                        oldParameter.IsOutParameter = parameter.IsOutParameter;
                         oldStoredProcedureParameters.Add(oldParameter);
                     }
                 }
 
+                var removedStoredProcedureParameters = oldParameters.Where(x => /*x.ParameterName.ToLower() != "@res" && */!parameters.Any(z => z.ParameterName == x.ParameterName)).ToList();
+
+                await _storedProcedureParameterService.DeleteRangeAsync(removedStoredProcedureParameters, cancellationToken);
                 await _storedProcedureParameterService.AddRangeAsync(newStoredProcedureParameters, cancellationToken);
                 await _storedProcedureParameterService.UpdateRangeAsync(oldStoredProcedureParameters, cancellationToken);
+
             }
             return new(true, "عملیات با موفقیت انجام شد");
         }

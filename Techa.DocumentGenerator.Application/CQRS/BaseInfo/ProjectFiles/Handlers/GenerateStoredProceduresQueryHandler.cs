@@ -40,12 +40,15 @@ namespace Techa.DocumentGenerator.Application.CQRS.BaseInfo.ProjectFiles.Handler
                 var storedProcedures = new List<StoredProcedure>();
                 foreach (var procedure in procedures)
                 {
+                    if (string.IsNullOrEmpty(procedure.ProcedureName))
+                        continue;
+
                     StoredProcedureType type = StoredProcedureType.NotSet;
-                    if (procedure.ProcedureName.ToLower().Contains("_delete"))
+                    if (procedure.ProcedureName.ToLower().Contains("delete_"))
                         type = StoredProcedureType.Delete;
-                    else if (procedure.ProcedureName.ToLower().Contains("_insert") || procedure.ProcedureName.ToLower().Contains("_update"))
+                    else if (procedure.ProcedureName.ToLower().Contains("save_"))
                         type = StoredProcedureType.CreateOrUpdate;
-                    else if (procedure.ProcedureName.ToLower().Contains("_get_"))
+                    else if (procedure.ProcedureName.ToLower().Contains("form_") || procedure.ProcedureName.ToLower().Contains("report_"))
                         type = StoredProcedureType.Read;
 
                     storedProcedures.Add(new StoredProcedure()

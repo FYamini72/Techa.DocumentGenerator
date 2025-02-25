@@ -63,6 +63,9 @@ namespace Techa.DocumentGenerator.Application.CQRS.DbInfo.StoredProcedureParamet
                     if (request.SearchDto.MaxLength.HasValue)
                         items = items.Where(x => x.MaxLength == request.SearchDto.MaxLength.Value);
 
+                    if (request.SearchDto.IncludeOutputParameters.HasValue && request.SearchDto.IncludeOutputParameters.Value == false)
+                        items = items.Where(x => x.IsOutParameter == false);
+
                     if (!request.SearchDto.Take.HasValue || request.SearchDto.Take <= 0)
                         request.SearchDto.Take = 10;
 

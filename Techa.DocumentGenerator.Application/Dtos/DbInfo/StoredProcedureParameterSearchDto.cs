@@ -5,6 +5,11 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
 {
     public class StoredProcedureParameterSearchDto : BaseSearchDto
     {
+        public StoredProcedureParameterSearchDto()
+        {
+            this.IncludeOutputParameters = false;
+        }
+
         public int? StoredProcedureId { get; set; }
         public string? ParameterName { get; set; }
         public string? ParameterType { get; set; }
@@ -17,5 +22,7 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
         public string? MaxValue { get; set; }
         public int? MinLength { get; set; }
         public int? MaxLength { get; set; }
+
+        public bool? IncludeOutputParameters { get; set; }
     }
 }

@@ -46,31 +46,50 @@ namespace Techa.DocumentGenerator.API.Controllers
         public async Task<ApiResult<SQLQueryDisplayDto>> ExecuteStoredProcedure(ExecuteStoredProcedureRequestDto model, CancellationToken cancellationToken)
         {
             var storedProcedure = await _storedProcedureService
-                .GetAll(x => x.ProcedureName.ToLower() == model.ProcedureName.ToLower() || (x.Alias != null && x.Alias.ToLower() == model.ProcedureName.ToLower()))
+                .GetAll(x => 
+                    x.ProjectId == model.ProjectId && 
+                    (x.ProcedureName.ToLower() == model.ProcedureName.ToLower() || (x.Alias != null && x.Alias.ToLower() == model.ProcedureName.ToLower()))
+                )
                 .FirstOrDefaultAsync();
+
             if (storedProcedure == null)
                 return BadRequest("پروسیجر مورد نظر یافت نشد");
 
             model.ProcedureName = storedProcedure.ProcedureName;
-            
-            var storedProcedureParameters = await _storedProcedureParameterService
-                .GetAll(x => x.StoredProcedureId == storedProcedure.Id)
+
+            var parametersQuery = _storedProcedureParameterService
+                .GetAll(x => x.StoredProcedureId == storedProcedure.Id);
+                
+            var storedProcedureParameters = await parametersQuery.ToListAsync();
+            var outParameters = await parametersQuery
+                .Where(x => x.IsOutParameter)
+                .Select(x => new KeyValuePair<string, string>(
+                    x.ParameterName.StartsWith("@") ? x.ParameterName : "@" + x.ParameterName,
+                    x.ParameterType ?? "NVARCHAR(MAX)")
+                )
                 .ToListAsync();
 
             if (model.Parameters == null)
                 model.Parameters = new Dictionary<string, string>();
 
-            model = TranslateAliasNames(storedProcedure, storedProcedureParameters, model);
+            model.Parameters = TranslateAliasNames(model.Parameters, storedProcedureParameters);
             
             var userId = _httpContextHelper.GetCurrentUserId();
             string strUserId = userId.HasValue ? userId.Value.ToString() : "";
-            if (storedProcedure.ProcedureName.Contains("Insert") || storedProcedure.ProcedureName.Contains("Update"))
+            
+            if (
+                storedProcedure.ProcedureName.ToLower().StartsWith("save_") && 
+                (
+                    storedProcedureParameters.Any(x=>x.ParameterName.ToLower() == "CreatedByUserId".ToLower()) || 
+                    storedProcedureParameters.Any(x => x.ParameterName.ToLower() == "ModifiedByUserId".ToLower())
+                )
+            )
             {
                 model.Parameters.Add("@CreatedByUserId", strUserId);
                 model.Parameters.Add("@ModifiedByUserId", strUserId);
             }
 
-            var result = await _adoService.ExecuteStoredProcedure(model, true, cancellationToken);
+            var result = await _adoService.ExecuteStoredProcedure(model, outParameters.ToDictionary(), true, cancellationToken);
             return result;
         }
 
@@ -82,7 +101,11 @@ namespace Techa.DocumentGenerator.API.Controllers
             if (storedProcedure == null)
                 return BadRequest("پروسیجر مورد نظر یافت نشد");
             var storedProcedureParameters = await _storedProcedureParameterService
-                .GetAll(x => x.StoredProcedureId == storedProcedureId && !ignoredParams.Contains(x.ParameterName.ToLower()))
+                .GetAll(x => 
+                    x.StoredProcedureId == storedProcedureId && 
+                    !ignoredParams.Contains(x.ParameterName.ToLower()) && 
+                    !x.IsOutParameter
+                )
                 .ToListAsync();
 
             bool hasDataTable = storedProcedure.StoredProcedureType == StoredProcedureType.NotSet || storedProcedure.StoredProcedureType == StoredProcedureType.Read;
@@ -102,35 +125,27 @@ namespace Techa.DocumentGenerator.API.Controllers
             return Ok(result);
         }
 
-        private ExecuteStoredProcedureRequestDto TranslateAliasNames(StoredProcedure storedProcedure, 
-            List<StoredProcedureParameter> storedProcedureParameters, 
-            ExecuteStoredProcedureRequestDto model)
+        private Dictionary<string, string> TranslateAliasNames(Dictionary<string, string> inputParameters, List<StoredProcedureParameter> storedProcedureParameters)
         {
             var parameters = new Dictionary<string, string>();
 
-            foreach (var parameter in model.Parameters)
+            foreach (var parameter in inputParameters)
             {
                 var param = storedProcedureParameters
                     .FirstOrDefault(x => x.ParameterName.ToLower() == parameter.Key.ToLower() || (x.Alias != null && x.Alias.ToLower() == parameter.Key.ToLower()));
                 if (param != null)
                 {
                     var parameterKey = param.ParameterName.StartsWith("@") ? param.ParameterName : $"@{param.ParameterName}";
-                    var dbParam = storedProcedureParameters.FirstOrDefault(x => x.ParameterName == parameterKey || x.Alias == parameterKey);
-                    if (dbParam == null)
-                        continue;
-                    if (dbParam.ParameterName.ToLower() == "@res")
-                        continue;
-                    parameters[dbParam.ParameterName] = parameter.Value;
+                    //var dbParam = storedProcedureParameters.FirstOrDefault(x => x.ParameterName == parameterKey || x.Alias == parameterKey);
+                    //if (dbParam == null)
+                    //    continue;
+                    //if (param.ParameterName.ToLower() == "@res")
+                    //    continue;
+                    parameters[param.ParameterName] = parameter.Value;
                 }
             }
 
-            return new ExecuteStoredProcedureRequestDto()
-            {
-                ProcedureName = storedProcedure.ProcedureName,
-                HasDataTable = model.HasDataTable,
-                ProjectId = storedProcedure.ProjectId,
-                Parameters = parameters
-            };
+            return parameters;
         }
 
         private Dictionary<string, string> GenerateParametersDictionary(List<StoredProcedureParameter> parameters)
@@ -142,11 +157,11 @@ namespace Techa.DocumentGenerator.API.Controllers
                 // اضافه کردن به دیکشنری در صورتی که نام پارامتر معتبر باشد  
                 if (!string.IsNullOrWhiteSpace(parameter.ParameterName))
                 {
-                    if (parameter.ParameterName.ToLower() == "@res")
-                        continue;
-
                     var parameterName = string.IsNullOrEmpty(parameter.Alias) ? parameter.ParameterName : parameter.Alias;
-                    result[parameterName] = parameter.DefaultValue ?? "NULL";
+                    string defaultValue = string.IsNullOrEmpty(parameter.DefaultValue)
+                        ? "null"
+                        : (parameter.DefaultValue.ToLower() == "null" ? "null" : parameter.DefaultValue);
+                    result[parameterName] = defaultValue;
                 }
             }
 

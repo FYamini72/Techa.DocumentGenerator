@@ -86,7 +86,7 @@ namespace Techa.DocumentGenerator.Application.Services.Implementations
             return result;
         }
 
-        public async Task<SQLQueryDisplayDto> ExecuteStoredProcedure(ExecuteStoredProcedureRequestDto model, bool? autoCloseConnection, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> ExecuteStoredProcedure(ExecuteStoredProcedureRequestDto model, Dictionary<string, string> outParams, bool? autoCloseConnection, CancellationToken cancellationToken)
         {
             autoCloseConnection = autoCloseConnection ?? true;
 
@@ -104,13 +104,19 @@ namespace Techa.DocumentGenerator.Application.Services.Implementations
 
             string executableProcedureScript = string.Empty;
 
-            if (model.ProcedureName.Contains("Insert") || model.ProcedureName.Contains("Update"))
-                executableProcedureScript += "DECLARE\t@res NVARCHAR(MAX)\r\n";
+            foreach (var outParam in outParams)
+            {
+                // Key: ParameterName - Value: ParameterType
+                executableProcedureScript += $"DECLARE\t{outParam.Key} {outParam.Value}\r\n";
+            }
 
             executableProcedureScript += $"EXEC {model.ProcedureName} {string.Join(", ", parametersWithValue)}";
 
-            if (model.ProcedureName.Contains("Insert") || model.ProcedureName.Contains("Update"))
-                executableProcedureScript += ", @res = @res OUTPUT\r\nSELECT @res as N'@res'";
+            foreach (var outParam in outParams)
+            {
+                // Key: ParameterName - Value: ParameterType
+                executableProcedureScript += $", {outParam.Key} = {outParam.Key} OUTPUT\r\nSELECT {outParam.Key} AS N'{outParam.Key}'";
+            }
 
             if (model.HasDataTable ?? true)
                 return await this.GetDataAsync(model.ProjectId, executableProcedureScript, autoCloseConnection, false, cancellationToken);
