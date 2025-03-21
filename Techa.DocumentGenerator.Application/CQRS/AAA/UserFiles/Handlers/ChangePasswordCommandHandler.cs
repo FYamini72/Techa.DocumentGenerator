@@ -20,7 +20,8 @@ namespace Techa.DocumentGenerator.Application.CQRS.AAA.UserFiles.Handlers
         {
             var obj = await _userService
                 .GetAll(x => x.UserName == request.User.UserName && 
-                             x.PasswordHash == request.User.OldPassword.GetSha256Hash())
+                             x.PasswordHash == request.User.OldPassword.GetSha256Hash() &&
+                             x.ProjectId == request.User.ProjectId)
                 .FirstOrDefaultAsync();
 
             if (obj == null)

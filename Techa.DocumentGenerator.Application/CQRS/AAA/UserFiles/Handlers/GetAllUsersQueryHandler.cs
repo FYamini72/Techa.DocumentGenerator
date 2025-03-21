@@ -30,22 +30,16 @@ namespace Techa.DocumentGenerator.Application.CQRS.AAA.UserFiles.Handlers
                 {
                     if (!string.IsNullOrEmpty(request.SearchDto.UserName))
                         items = items.Where(x => x.UserName.Contains(request.SearchDto.UserName));
-
+                    
                     if (!string.IsNullOrEmpty(request.SearchDto.FirstName))
                         items = items.Where(x => x.FirstName.Contains(request.SearchDto.FirstName));
                     
                     if (!string.IsNullOrEmpty(request.SearchDto.LastName))
                         items = items.Where(x => x.LastName.Contains(request.SearchDto.LastName));
-                    
-                    if (!string.IsNullOrEmpty(request.SearchDto.Email))
-                        items = items.Where(x => x.Email.Contains(request.SearchDto.Email));
-                    
-                    if (!string.IsNullOrEmpty(request.SearchDto.Mobile))
-                        items = items.Where(x => x.Mobile.Contains(request.SearchDto.Mobile));
-                    
-                    if (!string.IsNullOrEmpty(request.SearchDto.NationalCode))
-                        items = items.Where(x => x.NationalCode.Contains(request.SearchDto.NationalCode));
 
+                    if (request.SearchDto.ProjectId.HasValue)
+                        items = items.Where(x => x.ProjectId == request.SearchDto.ProjectId.Value);
+                    
                     if (request.SearchDto.RoleId.HasValue)
                         items = items.Where(x => x.UserRoles.Any(x => x.RoleId == request.SearchDto.RoleId));
 

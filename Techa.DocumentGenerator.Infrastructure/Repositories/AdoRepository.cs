@@ -14,26 +14,35 @@ namespace Techa.DocumentGenerator.Infrastructure.Repositories
 
         private SQLQueryDisplayDto result;
         private readonly IBaseRepository<Project> _projectRepository;
+        private readonly IConfiguration _configuration;
 
         public AdoRepository(IConfiguration configuration, IBaseRepository<Project> projectRepository)
         {
-            _connectionString = configuration.GetConnectionString("ProjectDbConnection") ?? 
+            _configuration = configuration;
+            _connectionString = _configuration.GetConnectionString("ProjectDbConnection") ??
                 "Data Source={0};Initial Catalog={1};Integrated Security=False;User ID={2};password={3}";
 
             result = new();
             _projectRepository = projectRepository;
         }
 
-        private async Task SetConnectionString(int projectId, CancellationToken cancellationToken)
+        private async Task SetConnectionString(int? projectId, CancellationToken cancellationToken)
         {
-            var project = await _projectRepository.GetByIdAsync(cancellationToken, projectId);
-            if (project == null)
-                throw new Exception("پروژه مورد نظر یافت نشد، لذا امکان ایجاد رشته اتصال به بانک اطلاعاتی ممکن نیست.");
+            if ((projectId ?? 0) > 0)
+            {
+                var project = await _projectRepository.GetByIdAsync(cancellationToken, projectId.Value);
+                if (project == null)
+                    throw new Exception("پروژه مورد نظر یافت نشد، لذا امکان ایجاد رشته اتصال به بانک اطلاعاتی ممکن نیست.");
 
-            _connectionString = string.Format(_connectionString, project.DbServerName, project.DbName, project.DbUserName, project.DbPassword);
+                _connectionString = string.Format(_connectionString, project.DbServerName, project.DbName, project.DbUserName, project.DbPassword);
+            }
+            else
+            {
+                _connectionString = _configuration.GetConnectionString("DbConnection");
+            }
         }
 
-        public async Task<SQLQueryDisplayDto> GetDataAsync(int projectId, string query, bool? autoCloseConnection, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> GetDataAsync(int? projectId, string query, bool? autoCloseConnection, CancellationToken cancellationToken)
         {
             await SetConnectionString(projectId, cancellationToken);
 
@@ -62,7 +71,7 @@ namespace Techa.DocumentGenerator.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<SQLQueryDisplayDto> SetDataAsync(int projectId, string query, bool? autoCloseConnection, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> SetDataAsync(int? projectId, string query, bool? autoCloseConnection, CancellationToken cancellationToken)
         {
             await SetConnectionString(projectId, cancellationToken);
 

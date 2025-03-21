@@ -11,15 +11,10 @@ namespace Techa.DocumentGenerator.Domain.EntitiesConfigurations.AAAConfiguration
             builder.HasMany(u => u.UserRoles).WithOne(ur => ur.User).HasForeignKey(ur => ur.UserId);
 
             builder.HasOne(u => u.Profile).WithMany().HasForeignKey(u => u.ProfileId);
+            builder.HasOne(u => u.Project).WithMany().HasForeignKey(u => u.ProjectId);
 
             builder.Property(x => x.FirstName).HasMaxLength(50).IsRequired();
             builder.Property(x => x.LastName).HasMaxLength(50).IsRequired();
-            builder.Property(x => x.FullName).HasMaxLength(100).IsRequired();
-            builder.Property(x => x.Email).HasMaxLength(100);
-            builder.Property(x => x.Mobile).HasMaxLength(15);
-            builder.Property(x => x.NationalCode).HasMaxLength(10);
-
-            builder.Property(e => e.FullName).ValueGeneratedOnAddOrUpdate();
         }
     }
 }

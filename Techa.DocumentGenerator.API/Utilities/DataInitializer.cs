@@ -18,7 +18,7 @@ public class DataInitializer
         if (!context.Set<User>().Any())
         {
             var adminRole = new Role { Title = "Admin" };
-            var userRole = new Role { Title = "Student" };
+            var userRole = new Role { Title = "ProjectUser" };
 
             context.Set<Role>().AddRange(new List<Role>()
             {

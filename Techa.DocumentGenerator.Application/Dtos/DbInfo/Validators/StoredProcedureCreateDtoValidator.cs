@@ -86,15 +86,17 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo.Validators
         static string ExtractStoredProcedureName(string sqlQuery)
         {
             // الگوی regex برای یافتن نام پروسیجر  
-            var regex = new Regex(@"ALTER\s+PROC\s+(\[?[a-zA-Z0-9_]+\]?\.\[?[a-zA-Z0-9_]+\]?)|\s*(\.[a-zA-Z0-9_]+)|(\[?[a-zA-Z0-9_]+\]?)",
-                                    RegexOptions.IgnoreCase);
+            //var regex = new Regex(@"ALTER\s+PROC\s+(\[?[a-zA-Z0-9_]+\]?\.\[?[a-zA-Z0-9_]+\]?)|\s*(\.[a-zA-Z0-9_]+)|(\[?[a-zA-Z0-9_]+\]?)",
+            //                        RegexOptions.IgnoreCase);
+            var regex = new Regex(@"ALTER\s+(PROC|PROCEDURE)\s+(\[?[a-zA-Z0-9_]+\]?\.\[?[a-zA-Z0-9_]+\]?)|\s*(\.[a-zA-Z0-9_]+)|(\[?[a-zA-Z0-9_]+\]?)",
+                        RegexOptions.IgnoreCase);
 
             var match = regex.Match(sqlQuery);
 
             if (match.Success)
             {
                 // نام پروسیجر را از اولین گروه استخراج کنید و"  
-                string procedureName = match.Groups[1].Value;
+                string procedureName = match.Groups[2].Value;
 
                 // حذف علامت‌های اضافی  
                 procedureName = procedureName.Replace("[", "").Replace("]", "").Trim();

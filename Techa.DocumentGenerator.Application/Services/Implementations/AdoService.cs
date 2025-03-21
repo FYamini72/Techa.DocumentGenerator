@@ -32,7 +32,7 @@ namespace Techa.DocumentGenerator.Application.Services.Implementations
             _method = httpContextHelper.GetRequestMethod();
         }
 
-        public async Task<SQLQueryDisplayDto> GetDataAsync(int projectId, string query, bool? autoCloseConnection, bool? ignoreLogging, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> GetDataAsync(int? projectId, string query, bool? autoCloseConnection, bool? ignoreLogging, CancellationToken cancellationToken)
         {
             autoCloseConnection = autoCloseConnection ?? true;
             ignoreLogging = ignoreLogging ?? false;
@@ -59,7 +59,7 @@ namespace Techa.DocumentGenerator.Application.Services.Implementations
             return result;
         }
 
-        public async Task<SQLQueryDisplayDto> SetDataAsync(int projectId, string query, bool? autoCloseConnection, bool? ignoreLogging, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> SetDataAsync(int? projectId, string query, bool? autoCloseConnection, bool? ignoreLogging, CancellationToken cancellationToken)
         {
             autoCloseConnection = autoCloseConnection ?? true;
             ignoreLogging = ignoreLogging ?? false;
@@ -124,13 +124,13 @@ namespace Techa.DocumentGenerator.Application.Services.Implementations
             return await this.SetDataAsync(model.ProjectId, executableProcedureScript, autoCloseConnection, false, cancellationToken);
         }
 
-        public async Task<SQLQueryDisplayDto> GetAllProceduresInfoAsync(int projectId, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> GetAllProceduresInfoAsync(int? projectId, CancellationToken cancellationToken)
         {
             string sqlQuery = @"SELECT p.name AS ProcedureName, NULL AS ProcedureCode FROM sys.procedures AS p";
 
             return await _adoRepository.GetDataAsync(projectId, sqlQuery, true, cancellationToken);            
         }
-        public async Task<SQLQueryDisplayDto> GetProcedureInfoAsync(int projectId, string procedureName, CancellationToken cancellationToken)
+        public async Task<SQLQueryDisplayDto> GetProcedureInfoAsync(int? projectId, string procedureName, CancellationToken cancellationToken)
         {
             string sqlQuery = @"  
                 SELECT   

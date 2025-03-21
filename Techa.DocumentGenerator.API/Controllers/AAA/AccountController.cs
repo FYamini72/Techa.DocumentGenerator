@@ -93,7 +93,7 @@ namespace Techa.DocumentGenerator.API.Controllers.AAA
                 return BadRequest(ModelState);
             }
 
-            var query = new LoginQuery(model.UserName, model.Password);
+            var query = new LoginQuery(model.UserName, model.Password, model.ProjectId);
             var handlerResponse = await _mediator.Send(query);
 
             if (handlerResponse.Status)
@@ -103,7 +103,7 @@ namespace Techa.DocumentGenerator.API.Controllers.AAA
         }
 
         [HttpPost("[action]")]
-        public async Task<ApiResult<UserDisplayDto>> CreateStudent(UserCreateDto model)
+        public async Task<ApiResult<UserDisplayDto>> CreateUser(UserCreateDto model)
         {
             var validationResult = await _userCreateValidator.ValidateAsync(model);
 
@@ -123,9 +123,9 @@ namespace Techa.DocumentGenerator.API.Controllers.AAA
         }
 
         [HttpGet("[action]")]
-        public async Task<ApiResult<UserDisplayDto>> GetUserByUsername(string Username)
+        public async Task<ApiResult<UserDisplayDto>> GetUserByUsername(string Username, int? projectId = null)
         {
-            var query = new GetUserByUsernameQuery(Username);
+            var query = new GetUserByUsernameQuery(Username, projectId);
             var handlerResponse = await _mediator.Send(query);
 
             if (handlerResponse.Status)
@@ -135,25 +135,25 @@ namespace Techa.DocumentGenerator.API.Controllers.AAA
         }
 
 
-        [HttpPut]
-        public async Task<ApiResult<UserDisplayDto>> Put(UserUpdateDto model)
-        {
-            var result = await _userUpdateValidator.ValidateAsync(model);
+        //[HttpPut]
+        //public async Task<ApiResult<UserDisplayDto>> Put(UserUpdateDto model)
+        //{
+        //    var result = await _userUpdateValidator.ValidateAsync(model);
 
-            if (!result.IsValid)
-            {
-                result.AddToModelState(ModelState);
-                return BadRequest(ModelState);
-            }
+        //    if (!result.IsValid)
+        //    {
+        //        result.AddToModelState(ModelState);
+        //        return BadRequest(ModelState);
+        //    }
 
-            var command = new UpdateUserCommand(model);
-            var handlerResponse = await _mediator.Send(command);
+        //    var command = new UpdateUserCommand(model);
+        //    var handlerResponse = await _mediator.Send(command);
 
-            if (handlerResponse.Status)
-                return Ok(handlerResponse.Data);
+        //    if (handlerResponse.Status)
+        //        return Ok(handlerResponse.Data);
 
-            return BadRequest(handlerResponse.Message);
-        }
+        //    return BadRequest(handlerResponse.Message);
+        //}
 
         [HttpPut("[action]")]
         public async Task<ApiResult> ChangePassword(UserChangePasswordDto model)
