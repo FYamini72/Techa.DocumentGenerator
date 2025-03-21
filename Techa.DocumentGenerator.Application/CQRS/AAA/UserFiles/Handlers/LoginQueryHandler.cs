@@ -25,7 +25,10 @@ namespace Techa.DocumentGenerator.Application.CQRS.AAA.UserFiles.Handlers
         {
             var passwordHash = SecurityHelper.GetSha256Hash(request.Password);
 
-            var user = await _userService.GetAll(x => x.UserName == request.UserName && x.PasswordHash == passwordHash)
+            var user = await _userService.GetAll(x => 
+                x.UserName == request.UserName && 
+                x.PasswordHash == passwordHash && 
+                x.ProjectId == request.ProjectId)
                 .Include(x => x.UserRoles)
                     .ThenInclude(x => x.Role)
                 .FirstOrDefaultAsync(cancellationToken);

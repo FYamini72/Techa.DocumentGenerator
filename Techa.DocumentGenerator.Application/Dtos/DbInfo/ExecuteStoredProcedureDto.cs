@@ -10,7 +10,7 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
             this.Parameters = new();
         }
 
-        public int ProjectId { get; set; }
+        public int? ProjectId { get; set; }
 
         public bool? HasDataTable { get; set; }
         //[JsonIgnore]

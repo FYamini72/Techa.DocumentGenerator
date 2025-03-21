@@ -7,11 +7,13 @@ namespace Techa.DocumentGenerator.Application.CQRS.AAA.UserFiles.Queries
     {
         public string UserName { get; }
         public string Password { get; }
+        public int? ProjectId { get; }
 
-        public LoginQuery(string userName, string password)
+        public LoginQuery(string userName, string password, int? projectId)
         {
             UserName = userName;
             Password = password;
+            ProjectId = projectId;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Techa.DocumentGenerator.Domain.Entities.BaseInfo;
 
 namespace Techa.DocumentGenerator.Domain.Entities.AAA
 {
@@ -7,20 +8,16 @@ namespace Techa.DocumentGenerator.Domain.Entities.AAA
     {
         public string UserName { get; set; }
         public string PasswordHash { get; set; }
-
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-
-        public string FullName { get; set; }
-
-        public string? Email { get; set; }
-        public string? Mobile { get; set; }
-        public string? NationalCode { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
 
         public int? ProfileId { get; set; }
         [ForeignKey(nameof(ProfileId))]
         public AttachmentFile? Profile { get; set; }
 
+        public int? ProjectId { get; set; }
+        [ForeignKey(nameof(ProjectId))]
+        public Project? Project { get; set; }
 
         public Guid SecurityStamp { get; set; }
 

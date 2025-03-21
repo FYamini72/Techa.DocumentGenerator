@@ -27,10 +27,6 @@ namespace Techa.DocumentGenerator.Infrastructure.Data
             modelBuilder.AddSequentialGuidForIdConvention();
             modelBuilder.AddCurrentDateTimeForCreatedDateConvention();
             modelBuilder.AddPluralizingTableNameConvention();
-
-            modelBuilder.Entity<Domain.Entities.AAA.User>()
-                .Property(x=>x.FullName)
-                .HasComputedColumnSql("[FirstName] + ' ' + [LastName]");
         }
 
 
