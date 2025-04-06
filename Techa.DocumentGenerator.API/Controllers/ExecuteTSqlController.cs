@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Techa.DocumentGenerator.API.Utilities.Api;
 using Techa.DocumentGenerator.API.Utilities.Filters;
 using Techa.DocumentGenerator.Application.Dtos.DbInfo;
+using Techa.DocumentGenerator.Application.Services.Implementations;
 using Techa.DocumentGenerator.Application.Services.Interfaces;
 using Techa.DocumentGenerator.Domain.Entities.DbInfo;
 using Techa.DocumentGenerator.Domain.Enums;
@@ -89,8 +91,9 @@ namespace Techa.DocumentGenerator.API.Controllers
                 model.Parameters.Add("@ModifiedByUserId", strUserId);
             }
 
-            var result = await _adoService.ExecuteStoredProcedure(model, outParameters.ToDictionary(), true, cancellationToken);
-            return result;
+            if (model.LinesToDebug != null && model.LinesToDebug.Any())
+                return await _adoService.ExecuteStoredProcedureWithDebugging(model, outParameters.ToDictionary(), true, cancellationToken);
+            return await _adoService.ExecuteStoredProcedure(model, outParameters.ToDictionary(), true, false, true, cancellationToken);
         }
 
         [HttpGet("[action]")]
@@ -118,12 +121,28 @@ namespace Techa.DocumentGenerator.API.Controllers
                     ProjectId = storedProcedure.ProjectId,
                     ProcedureName = storedProcedure.Alias ?? storedProcedure.ProcedureName,
                     HasDataTable = hasDataTable,
-                    Parameters = GenerateParametersDictionary(storedProcedureParameters)
+                    Parameters = GenerateParametersDictionary(storedProcedureParameters),
+                    LinesToDebug = new() { new() }
                 }
             };
 
             return Ok(result);
         }
+        
+        [HttpPost("[action]")]
+        public async Task<ApiResult<SQLQueryDisplayDto>> DropTempProcedure(DropStoredProcedureRequestDto model, CancellationToken cancellationToken)
+        {
+            return await _adoService.DropTempProcedure(model, cancellationToken);
+        }
+
+        //[HttpPost("[action]")]
+        //public async Task<ApiResult<SQLQueryDisplayDto>> ExecuteStoredProcedureWithDebugger(StoredProcedureWithDebuggerDto model)
+        //{
+        //    return _adoService.ExecuteStoredProcedure(model);
+        //    result.AddToModelState(ModelState);
+        //    return BadRequest(ModelState);
+
+        //}
 
         private Dictionary<string, string> TranslateAliasNames(Dictionary<string, string> inputParameters, List<StoredProcedureParameter> storedProcedureParameters)
         {

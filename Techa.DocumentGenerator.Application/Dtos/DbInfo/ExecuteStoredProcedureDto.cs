@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Techa.DocumentGenerator.Domain.Enums;
 
 namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
 {
@@ -8,6 +9,7 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
         {
             this.ProcedureName = "";
             this.Parameters = new();
+            this.LinesToDebug = new();
         }
 
         public int? ProjectId { get; set; }
@@ -16,6 +18,7 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
         //[JsonIgnore]
         public string ProcedureName { get; set; }
         public Dictionary<string, string> Parameters { get; set; }
+        public List<LineToDebugDto> LinesToDebug { get; set; }
     }
 
     public class StoredProcedureSummeryResponseDto
@@ -23,5 +26,11 @@ namespace Techa.DocumentGenerator.Application.Dtos.DbInfo
         public string Url { get; set; }
         public string HttpMethod { get; set; }
         public ExecuteStoredProcedureRequestDto InputData { get; set; }
+    }
+
+    public class LineToDebugDto
+    {
+        public string Script { get; set; } = string.Empty;
+        public ScriptType ScriptType { get; set; }
     }
 }
