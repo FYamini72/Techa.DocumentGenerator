@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Techa.DocumentGenerator.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Techa.DocumentGenerator.Infrastructure.Data;
 namespace Techa.DocumentGenerator.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250401091944_Mig_20250401_01")]
+    partial class Mig_20250401_01
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -520,9 +523,6 @@ namespace Techa.DocumentGenerator.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ProjectId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Script")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -535,8 +535,6 @@ namespace Techa.DocumentGenerator.Infrastructure.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("ModifiedByUserId");
-
-                    b.HasIndex("ProjectId");
 
                     b.HasIndex("UserId");
 
@@ -794,10 +792,6 @@ namespace Techa.DocumentGenerator.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("ModifiedByUserId");
 
-                    b.HasOne("Techa.DocumentGenerator.Domain.Entities.BaseInfo.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId");
-
                     b.HasOne("Techa.DocumentGenerator.Domain.Entities.AAA.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
@@ -805,8 +799,6 @@ namespace Techa.DocumentGenerator.Infrastructure.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("ModifiedByUser");
-
-                    b.Navigation("Project");
 
                     b.Navigation("User");
                 });

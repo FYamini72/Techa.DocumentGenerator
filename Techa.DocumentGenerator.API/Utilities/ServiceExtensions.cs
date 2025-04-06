@@ -117,7 +117,7 @@ namespace Techa.DocumentGenerator.API.Utilities
                                     context.Fail("This token has no secuirty stamp");
 
                                 var userId = claimsIdentity.GetUserId<int>();
-                                var userAdoResponse = await adoService.GetDataAsync(projectId, $"SELECT [SecurityStamp] FROM USERS WHERE Id = {userId}", true, true, context.HttpContext.RequestAborted);
+                                var userAdoResponse = await adoService.GetDataAsync(projectId, $"SELECT [SecurityStamp] FROM USERS WHERE Id = {userId}", true, true, true, context.HttpContext.RequestAborted);
 
                                 var data = JsonConvert.DeserializeObject<List<UserSecurityStamp>>(userAdoResponse.Dataset);
                                 var dbSecurityStamp = data?.FirstOrDefault()?.SecurityStamp ?? "";
